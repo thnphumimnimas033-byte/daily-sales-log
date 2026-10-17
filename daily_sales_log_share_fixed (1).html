@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daily Sales Log | บันทึกยอดขายรายวัน</title>
+<style>
+:root{--ink:#172033;--muted:#657089;--line:#e5e9f2;--bg:#f5f7fb;--accent:#3659d9;--green:#16845b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink)}
+header{background:linear-gradient(130deg,#253b80,#5275e8);color:white;padding:26px 18px}
+.wrap{max-width:1050px;margin:auto}h1{font-size:clamp(24px,4vw,34px);margin:0 0 7px}header p{margin:0;opacity:.9}
+main{max-width:1050px;margin:20px auto;padding:0 14px 40px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.stat,.panel,.sale{background:white;border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 4px 14px #1a2c5010}
+.stat small{color:var(--muted)}.stat strong{display:block;font-size:24px;margin-top:4px}
+.panel{margin-bottom:16px}h2{font-size:19px;margin:0 0 14px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+label{display:block;font-size:13px;color:#4c5870;margin-bottom:5px}input,textarea,select{width:100%;padding:11px 12px;border:1px solid #d9dfeb;border-radius:10px;font:inherit;background:#fff;color:var(--ink)}
+textarea{min-height:72px;resize:vertical}.wide{grid-column:1/-1}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+button,.filebtn{border:0;border-radius:10px;padding:10px 14px;font:inherit;font-weight:650;cursor:pointer;background:var(--accent);color:white}
+button.secondary,.filebtn.secondary{background:#edf1ff;color:#2d49ac}button.danger{background:#fff0f0;color:#b42318}button.green{background:var(--green)}
+input[type=file]{padding:8px}.hint{font-size:12px;color:var(--muted);line-height:1.5;margin:8px 0 0}
+.listhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.sales{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.sale-top{display:flex;gap:12px;align-items:flex-start}.thumb{width:86px;height:86px;flex:0 0 86px;border-radius:12px;object-fit:cover;background:#f0f3fa;border:1px solid var(--line)}
+.sale h3{margin:0 0 4px;font-size:17px}.muted{color:var(--muted);font-size:13px}.price{font-size:20px;font-weight:750;color:var(--green);margin-top:7px}.sale-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}.sale-actions button{font-size:13px;padding:8px 10px}
+.empty{padding:26px;text-align:center;color:var(--muted);border:1px dashed #cbd3e3;border-radius:14px;grid-column:1/-1}
+#shareText{font-size:13px;background:#f7f8fc;border-radius:10px;padding:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:12px}
+@media(max-width:650px){.stats{gap:8px}.stat{padding:12px}.stat strong{font-size:19px}.sales{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.wide{grid-column:auto}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1>📒 Daily Sales Log</h1><p>บันทึกยอดขายรายวัน • เพิ่มรูปสินค้า • ส่งต่อข้อมูลให้คนอื่นได้</p></div></header>
+<main>
+<section class="stats">
+ <div class="stat"><small>ยอดขายรวม</small><strong id="total">฿0.00</strong></div>
+ <div class="stat"><small>จำนวนรายการ</small><strong id="count">0</strong></div>
+ <div class="stat"><small>จำนวนชิ้นรวม</small><strong id="units">0</strong></div>
+</section>
+<section class="panel">
+<h2 id="formTitle">➕ เพิ่มรายการขาย</h2>
+<form id="saleForm">
+<div class="grid">
+ <div><label for="date">วันที่ขาย</label><input id="date" type="date" required></div>
+ <div><label for="product">ชื่อสินค้า / รายการ</label><input id="product" placeholder="เช่น เสื้อยืด, ขนมปัง, ทีวี" required></div>
+ <div><label for="qty">จำนวน</label><input id="qty" type="number" min="1" value="1" required></div>
+ <div><label for="priceInput">ราคาต่อชิ้น (บาท)</label><input id="priceInput" type="number" min="0" step="0.01" placeholder="เช่น 120" required></div>
+ <div><label for="customer">ชื่อลูกค้า (ไม่บังคับ)</label><input id="customer" placeholder="ชื่อลูกค้าหรือช่องทางขาย"></div>
+ <div><label for="payment">วิธีชำระเงิน</label><select id="payment"><option>เงินสด</option><option>โอนเงิน</option><option>บัตร</option><option>อื่น ๆ</option></select></div>
+ <div class="wide"><label for="photo">รูปสินค้า / หลักฐาน (ไม่บังคับ)</label><input id="photo" type="file" accept="image/*"><p class="hint">เลือกรูปจากมือถือได้ รูปจะถูกเก็บไว้ในเบราว์เซอร์นี้และรวมไปกับไฟล์ส่งออก</p><img id="preview" alt="ตัวอย่างรูปที่เลือก" style="display:none;max-width:150px;max-height:150px;object-fit:cover;border-radius:12px;margin-top:8px"></div>
+ <div class="wide"><label for="notes">หมายเหตุ</label><textarea id="notes" placeholder="รายละเอียดเพิ่มเติม เช่น โปรโมชั่นหรือหมายเหตุ"></textarea></div>
+</div>
+<div class="actions"><button type="submit" id="saveBtn">บันทึกรายการ</button><button type="button" class="secondary" id="resetBtn">ล้างแบบฟอร์ม</button></div>
+<p class="hint">ตัวอย่างรายการเริ่มต้นมีให้ดูด้านล่าง คุณสามารถแก้ไขหรือลบได้</p>
+</form>
+</section>
+<section class="panel">
+<div class="listhead"><h2>🧾 รายการขาย</h2><div style="min-width:180px"><input id="search" placeholder="ค้นหาสินค้า / ลูกค้า"></div></div>
+<div id="sales" class="sales"></div>
+</section>
+<section class="panel">
+<h2>🔗 แชร์รายการให้คนอื่นเห็น</h2>
+<p>ปุ่มส่งออกจะสร้างไฟล์ข้อมูลที่มีรายการและรูปภาพแนบอยู่ ส่งไฟล์นี้ให้คนอื่น แล้วให้เขาเปิดหน้านี้และกด “นำเข้าไฟล์ข้อมูล” เพื่อดูรายการทั้งหมดได้</p>
+<div class="actions">
+<button class="green" id="exportBtn">ส่งออกข้อมูลเพื่อแชร์ (.json)</button>
+<label class="filebtn secondary" for="importFile">นำเข้าไฟล์ข้อมูล</label><input id="importFile" type="file" accept=".json,application/json" style="display:none">
+<button class="secondary" id="shareBtn">แชร์ข้อความสรุป</button>
+</div>
+<div id="shareText" style="display:none;margin-top:12px"></div>
+<p class="hint"><b>วิธีแชร์และเก็บข้อมูล:</b> กด “แชร์ไฟล์ข้อมูลให้คนอื่น” เพื่อส่งไฟล์ที่มีรายการและรูปภาพแนบไปด้วย (ถ้าอุปกรณ์รองรับการแชร์ไฟล์) หากแชร์ไฟล์โดยตรงไม่ได้ ระบบจะดาวน์โหลดไฟล์สำรองให้ แล้วแนบไฟล์นั้นส่งผ่าน LINE, อีเมล หรือแอปอื่นได้ ผู้รับต้องเปิดหน้า HTML นี้แล้วกด “นำเข้าไฟล์ข้อมูล” เพื่อดูข้อมูลของคุณ ข้อมูลที่บันทึกในหน้านี้จะเก็บไว้ในเบราว์เซอร์เครื่องนี้ด้วย แต่ควรกดบันทึกไฟล์สำรองเป็นระยะ เพราะข้อมูลในเบราว์เซอร์อาจหายได้เมื่อเคลียร์ข้อมูลเว็บไซต์หรือเปลี่ยนเครื่อง การแชร์ไฟล์ไม่ใช่การซิงก์ออนไลน์อัตโนมัติ</p>
+</section>
+<footer>ข้อมูลตัวอย่างเป็นข้อมูลสมมติ • ควรส่งออกไฟล์สำรองเป็นระยะ</footer>
+</main>
+<script>
+const KEY='dailySalesLogV1';
+const $=id=>document.getElementById(id);
+let entries=[], editingId=null, photoData='';
+const today=new Date(); $('date').value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+const demoSvg=(emoji,bg)=>'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="300" height="220"><rect width="100%" height="100%" rx="24" fill="${bg}"/><text x="50%" y="52%" font-size="90" text-anchor="middle" dominant-baseline="middle">${emoji}</text></svg>`);
+function load(){try{entries=JSON.parse(localStorage.getItem(KEY)||'[]')}catch{entries=[]}
+ if(!entries.length){entries=[
+ {id:'demo1',date:$('date').value,product:'ขนมปัง',qty:5,price:25,customer:'หน้าร้าน',payment:'เงินสด',notes:'ตัวอย่างรายการ',photo:demoSvg('🍞','#fff1df')},
+ {id:'demo2',date:$('date').value,product:'เสื้อยืด',qty:2,price:159,customer:'ลูกค้าออนไลน์',payment:'โอนเงิน',notes:'ตัวอย่างรายการ',photo:demoSvg('👕','#e7efff')},
+ {id:'demo3',date:$('date').value,product:'สินค้าอิเล็กทรอนิกส์',qty:1,price:499,customer:'หน้าร้าน',payment:'โอนเงิน',notes:'ตัวอย่างรายการ',photo:demoSvg('📺','#e6f7ef')}
+ ];persist();}
+ render();}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(entries))}catch(e){alert('พื้นที่จัดเก็บอาจไม่พอ โดยเฉพาะรูปภาพ กรุณาส่งออกข้อมูลและใช้รูปขนาดเล็กลง');}}
+function money(n){return Number(n||0).toLocaleString('th-TH',{style:'currency',currency:'THB'})}
+function resetForm(){editingId=null;$('saleForm').reset();$('date').value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;$('qty').value=1;$('formTitle').textContent='➕ เพิ่มรายการขาย';$('saveBtn').textContent='บันทึกรายการ';$('preview').style.display='none';$('preview').src='';photoData='';}
+$('photo').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;if(!f.type.startsWith('image/'))return alert('กรุณาเลือกไฟล์รูปภาพ');if(f.size>3*1024*1024)return alert('รูปใหญ่เกินไป กรุณาเลือกรูปไม่เกิน 3 MB');const r=new FileReader();r.onload=()=>{photoData=r.result;$('preview').src=photoData;$('preview').style.display='block'};r.readAsDataURL(f)});
+$('saleForm').addEventListener('submit',e=>{e.preventDefault();const old=entries.find(x=>x.id===editingId);const item={id:editingId||crypto.randomUUID?.()||String(Date.now()),date:$('date').value,product:$('product').value.trim(),qty:Number($('qty').value),price:Number($('priceInput').value),customer:$('customer').value.trim(),payment:$('payment').value,notes:$('notes').value.trim(),photo:photoData||(old?.photo||'')};if(editingId)entries=entries.map(x=>x.id===editingId?item:x);else entries.unshift(item);persist();resetForm();render();});
+$('resetBtn').onclick=resetForm;
+function render(){const q=$('search').value.trim().toLowerCase();const filtered=entries.filter(x=>[x.product,x.customer,x.notes,x.payment].join(' ').toLowerCase().includes(q));$('sales').innerHTML='';if(!filtered.length){$('sales').innerHTML='<div class="empty">ไม่พบรายการขาย</div>'}
+filtered.forEach(x=>{const el=document.createElement('article');el.className='sale';const img=x.photo||demoSvg('🛍️','#edf1fa');el.innerHTML=`<div class="sale-top"><img class="thumb" alt="รูปสินค้า"><div style="min-width:0"><h3></h3><div class="muted"></div><div class="muted"></div><div class="price"></div></div></div><div class="muted notes" style="margin-top:9px"></div><div class="sale-actions"><button class="secondary edit">แก้ไข</button><button class="secondary download">บันทึกรูป</button><button class="danger delete">ลบรายการ</button></div>`;el.querySelector('img').src=img;el.querySelector('h3').textContent=x.product;el.querySelectorAll('.muted')[0].textContent=`${x.date} • จำนวน ${x.qty} ชิ้น`;el.querySelectorAll('.muted')[1].textContent=`ลูกค้า: ${x.customer||'-'} • ${x.payment}`;el.querySelector('.price').textContent=money(x.qty*x.price);el.querySelector('.notes').textContent=x.notes||'';el.querySelector('.edit').onclick=()=>edit(x);el.querySelector('.delete').onclick=()=>{if(confirm('ลบรายการนี้ใช่หรือไม่?')){entries=entries.filter(a=>a.id!==x.id);persist();render()}};el.querySelector('.download').onclick=()=>{if(!x.photo)return alert('รายการนี้ไม่มีรูป');const a=document.createElement('a');a.href=x.photo;a.download=(x.product||'product')+'.png';a.click()};$('sales').appendChild(el)});
+$('total').textContent=money(entries.reduce((s,x)=>s+x.qty*x.price,0));$('count').textContent=entries.length;$('units').textContent=entries.reduce((s,x)=>s+Number(x.qty||0),0);}
+function edit(x){editingId=x.id;$('date').value=x.date;$('product').value=x.product;$('qty').value=x.qty;$('priceInput').value=x.price;$('customer').value=x.customer||'';$('payment').value=x.payment||'เงินสด';$('notes').value=x.notes||'';photoData=x.photo||'';$('preview').src=photoData;$('preview').style.display=photoData?'block':'none';$('formTitle').textContent='✏️ แก้ไขรายการ';$('saveBtn').textContent='บันทึกการแก้ไข';window.scrollTo({top:0,behavior:'smooth'});}
+$('search').addEventListener('input',render);
+function makeBackupFile(){
+ const payload={app:'Daily Sales Log',version:1,exportedAt:new Date().toISOString(),entries};
+ return new File([JSON.stringify(payload,null,2)],'daily_sales_log_shared.json',{type:'application/json'});
+}
+function downloadBackup(file){
+ const url=URL.createObjectURL(file);const a=document.createElement('a');
+ a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+$('exportBtn').onclick=()=>{try{downloadBackup(makeBackupFile());alert('สร้างไฟล์สำรองแล้ว กรุณาเก็บไฟล์ daily_sales_log_shared.json ไว้ หรือส่งให้ตัวเองทางอีเมล/ไดรฟ์')}catch(err){alert('สร้างไฟล์สำรองไม่สำเร็จ กรุณาลองใหม่')}};
+$('shareFileBtn').onclick=async()=>{
+ try{
+  const file=makeBackupFile();
+  if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+   await navigator.share({title:'ข้อมูลบันทึกยอดขาย',text:'ไฟล์ข้อมูลยอดขายพร้อมรูปภาพแนบ เปิดไฟล์ HTML แล้วเลือก “นำเข้าไฟล์ข้อมูล” เพื่อเปิดข้อมูลนี้',files:[file]});
+  }else{
+   downloadBackup(file);
+   alert('อุปกรณ์หรือเบราว์เซอร์นี้ยังแชร์ไฟล์จากหน้านี้โดยตรงไม่ได้ จึงดาวน์โหลดไฟล์สำรองให้แล้ว กรุณาแนบไฟล์ daily_sales_log_shared.json ส่งให้ผู้รับผ่าน LINE, อีเมล หรือแอปที่ต้องการ');
+  }
+ }catch(err){
+  if(err && err.name==='AbortError')return;
+  try{downloadBackup(makeBackupFile());alert('ดาวน์โหลดไฟล์สำรองแล้ว กรุณาแนบไฟล์นี้ส่งให้ผู้รับ')}catch(e){alert('แชร์หรือบันทึกไฟล์ไม่สำเร็จ กรุณาลองกด “บันทึกไฟล์สำรอง”')}
+ }
+};
+$('importFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const data=JSON.parse(await f.text());const imported=Array.isArray(data)?data:data.entries;if(!Array.isArray(imported))throw Error('รูปแบบไฟล์ไม่ถูกต้อง');if(confirm(`นำเข้า ${imported.length} รายการ? รายการที่นำเข้าจะเพิ่มเข้าในรายการปัจจุบัน`)){const ids=new Set(entries.map(x=>x.id));imported.forEach(x=>{if(ids.has(x.id))x.id=String(Date.now())+Math.random().toString(16).slice(2);entries.push(x)});persist();render();alert('นำเข้าข้อมูลเรียบร้อย')} }catch(err){alert('อ่านไฟล์ไม่ได้ กรุณาเลือกไฟล์ JSON ที่ส่งออกจากแอปนี้')}e.target.value=''};
+$('shareBtn').onclick=()=>{const text=`สรุปยอดขาย\nจำนวนรายการ: ${entries.length}\nจำนวนชิ้น: ${entries.reduce((s,x)=>s+Number(x.qty||0),0)}\nยอดขายรวม: ${money(entries.reduce((s,x)=>s+x.qty*x.price,0))}\n\nหากต้องการดูรายละเอียดและรูป ให้ส่งไฟล์ daily_sales_log_shared.json ที่ส่งออกจากหน้าเว็บนี้ให้ผู้รับด้วย`;const box=$('shareText');box.style.display='block';box.textContent=text;if(navigator.share)navigator.share({title:'สรุปยอดขาย',text}).catch(()=>{});else if(navigator.clipboard)navigator.clipboard.writeText(text).then(()=>alert('คัดลอกข้อความสรุปแล้ว')).catch(()=>{});};
+load();
+</script>
+</body>
+</html>
